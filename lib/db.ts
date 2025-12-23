@@ -1,6 +1,10 @@
 import Database from 'better-sqlite3';
 import fs from 'fs';
 import path from 'path';
+import { Requisition, RequisitionItem } from '@/types/requisition';
+import { RFQ } from '@/types/rfq';
+import { Vendor } from '@/types/vendor';
+import { Quotation, QuotationItem } from '@/types/quotation';
 
 let db: Database.Database | null = null;
 
@@ -39,8 +43,8 @@ export function getDb(): Database.Database {
 // Helper functions for common operations
 export const dbHelpers = {
   // Requisitions
-  getRequisitions: () => getDb().prepare('SELECT * FROM requisitions ORDER BY uploaded_at DESC').all(),
-  getRequisition: (id: number) => getDb().prepare('SELECT * FROM requisitions WHERE id = ?').get(id),
+  getRequisitions: () => getDb().prepare('SELECT * FROM requisitions ORDER BY uploaded_at DESC').all() as Requisition[],
+  getRequisition: (id: number) => getDb().prepare('SELECT * FROM requisitions WHERE id = ?').get(id) as Requisition | undefined,
   createRequisition: (data: any) => {
     const stmt = getDb().prepare(`
       INSERT INTO requisitions (vessel_name, vessel_imo, port_name, delivery_date, currency, notes)
@@ -51,7 +55,7 @@ export const dbHelpers = {
 
   // Requisition Items
   getRequisitionItems: (requisitionId: number) =>
-    getDb().prepare('SELECT * FROM requisition_items WHERE requisition_id = ? ORDER BY line_number').all(requisitionId),
+    getDb().prepare('SELECT * FROM requisition_items WHERE requisition_id = ? ORDER BY line_number').all(requisitionId) as RequisitionItem[],
   addRequisitionItem: (data: any) => {
     const stmt = getDb().prepare(`
       INSERT INTO requisition_items (requisition_id, line_number, item_name, item_description, quantity, unit, specifications)
@@ -61,8 +65,8 @@ export const dbHelpers = {
   },
 
   // Vendors
-  getVendors: () => getDb().prepare('SELECT * FROM vendors WHERE is_active = 1 ORDER BY name').all(),
-  getVendor: (id: number) => getDb().prepare('SELECT * FROM vendors WHERE id = ?').get(id),
+  getVendors: () => getDb().prepare('SELECT * FROM vendors WHERE is_active = 1 ORDER BY name').all() as Vendor[],
+  getVendor: (id: number) => getDb().prepare('SELECT * FROM vendors WHERE id = ?').get(id) as Vendor | undefined,
   createVendor: (data: any) => {
     const stmt = getDb().prepare(`
       INSERT INTO vendors (name, email, phone, country, ports_served, categories_served, notes)
@@ -72,10 +76,10 @@ export const dbHelpers = {
   },
 
   // RFQs
-  getRFQs: () => getDb().prepare('SELECT * FROM rfqs ORDER BY created_at DESC').all(),
-  getRFQ: (id: number) => getDb().prepare('SELECT * FROM rfqs WHERE id = ?').get(id),
+  getRFQs: () => getDb().prepare('SELECT * FROM rfqs ORDER BY created_at DESC').all() as RFQ[],
+  getRFQ: (id: number) => getDb().prepare('SELECT * FROM rfqs WHERE id = ?').get(id) as RFQ | undefined,
   getRFQByRequisition: (requisitionId: number) =>
-    getDb().prepare('SELECT * FROM rfqs WHERE requisition_id = ?').get(requisitionId),
+    getDb().prepare('SELECT * FROM rfqs WHERE requisition_id = ?').get(requisitionId) as RFQ | undefined,
   createRFQ: (data: any) => {
     const stmt = getDb().prepare(`
       INSERT INTO rfqs (requisition_id, subject, body, recipients, status)
@@ -85,10 +89,10 @@ export const dbHelpers = {
   },
 
   // Quotations
-  getQuotations: () => getDb().prepare('SELECT * FROM quotations ORDER BY received_at DESC').all(),
-  getQuotation: (id: number) => getDb().prepare('SELECT * FROM quotations WHERE id = ?').get(id),
+  getQuotations: () => getDb().prepare('SELECT * FROM quotations ORDER BY received_at DESC').all() as Quotation[],
+  getQuotation: (id: number) => getDb().prepare('SELECT * FROM quotations WHERE id = ?').get(id) as Quotation | undefined,
   getQuotationsByRFQ: (rfqId: number) =>
-    getDb().prepare('SELECT * FROM quotations WHERE rfq_id = ? ORDER BY received_at DESC').all(rfqId),
+    getDb().prepare('SELECT * FROM quotations WHERE rfq_id = ? ORDER BY received_at DESC').all(rfqId) as Quotation[],
   createQuotation: (data: any) => {
     const stmt = getDb().prepare(`
       INSERT INTO quotations (rfq_id, vendor_id, vendor_email, extraction_status)
@@ -99,7 +103,7 @@ export const dbHelpers = {
 
   // Quotation Items
   getQuotationItems: (quotationId: number) =>
-    getDb().prepare('SELECT * FROM quotation_items WHERE quotation_id = ?').all(quotationId),
+    getDb().prepare('SELECT * FROM quotation_items WHERE quotation_id = ?').all(quotationId) as QuotationItem[],
 
   // Purchase History
   getPurchaseHistory: (vendorId: number) =>

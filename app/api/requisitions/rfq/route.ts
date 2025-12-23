@@ -121,6 +121,12 @@ export async function PATCH(request: NextRequest) {
 
     // Get requisition for context
     const requisition = dbHelpers.getRequisition(rfq.requisition_id);
+    if (!requisition) {
+      return NextResponse.json(
+        { error: 'Requisition not found' },
+        { status: 404 }
+      );
+    }
 
     // Send email
     const result = await sendRFQEmail({
