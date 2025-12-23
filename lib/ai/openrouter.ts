@@ -165,9 +165,9 @@ export async function callOpenRouter<T>(
 // Helper function for RFQ generation
 export async function generateRFQ(requisitionData: any): Promise<{ subject: string; body: string }> {
   const schema = z.object({
-    subject: z.string(),
-    body: z.string(),
-  });
+    subject: z.string().min(1),
+    body: z.string().min(1),
+  }) as z.ZodType<{ subject: string; body: string }>;
 
   const systemMessage = `You are a professional maritime purchasing assistant. Generate a professional and formal RFQ (Request for Quotation) email.`;
 
@@ -197,7 +197,7 @@ Phone: ${process.env.COMPANY_PHONE}
 Return response as JSON with "subject" and "body" keys.
 `;
 
-  return await callOpenRouter(prompt, schema, 'rfq_generation', systemMessage);
+  return await callOpenRouter<{ subject: string; body: string }>(prompt, schema, 'rfq_generation', systemMessage);
 }
 
 // Helper function for quotation extraction
