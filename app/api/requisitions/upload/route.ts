@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       uploaded_by: request.headers.get('user') || 'system',
     });
 
-    const requisitionId = result.lastID;
+    const requisitionId = Number(result.lastInsertRowid);
 
     // Create requisition items
     for (const item of items) {

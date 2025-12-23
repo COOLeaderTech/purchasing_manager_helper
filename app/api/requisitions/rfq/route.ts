@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       rfq: {
-        id: result.lastID,
+        id: Number(result.lastInsertRowid),
         ...validated,
         status: 'draft',
       },
