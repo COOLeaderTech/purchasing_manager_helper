@@ -47,10 +47,21 @@ export const dbHelpers = {
   getRequisition: (id: number) => getDb().prepare('SELECT * FROM requisitions WHERE id = ?').get(id) as Requisition | undefined,
   createRequisition: (data: any) => {
     const stmt = getDb().prepare(`
-      INSERT INTO requisitions (vessel_name, vessel_imo, port_name, delivery_date, currency, notes)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO requisitions (vessel_name, vessel_imo, requisition_number, requisition_title, requisition_date, requisition_group, port_name, delivery_date, currency, notes)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    return stmt.run(data.vessel_name, data.vessel_imo, data.port_name, data.delivery_date, data.currency, data.notes);
+    return stmt.run(
+      data.vessel_name,
+      data.vessel_imo,
+      data.requisition_number,
+      data.requisition_title,
+      data.requisition_date,
+      data.requisition_group,
+      data.port_name,
+      data.delivery_date,
+      data.currency,
+      data.notes
+    );
   },
 
   // Requisition Items
@@ -58,10 +69,21 @@ export const dbHelpers = {
     getDb().prepare('SELECT * FROM requisition_items WHERE requisition_id = ? ORDER BY line_number').all(requisitionId) as RequisitionItem[],
   addRequisitionItem: (data: any) => {
     const stmt = getDb().prepare(`
-      INSERT INTO requisition_items (requisition_id, line_number, item_name, item_description, quantity, unit, specifications)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO requisition_items (requisition_id, line_number, item_number, item_name, item_description, quantity, unit, department, specifications, item_notes)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    return stmt.run(data.requisition_id, data.line_number, data.item_name, data.item_description, data.quantity, data.unit, data.specifications);
+    return stmt.run(
+      data.requisition_id,
+      data.line_number,
+      data.item_number,
+      data.item_name,
+      data.item_description,
+      data.quantity,
+      data.unit,
+      data.department,
+      data.specifications,
+      data.item_notes
+    );
   },
 
   // Vendors
@@ -82,10 +104,18 @@ export const dbHelpers = {
     getDb().prepare('SELECT * FROM rfqs WHERE requisition_id = ?').get(requisitionId) as RFQ | undefined,
   createRFQ: (data: any) => {
     const stmt = getDb().prepare(`
-      INSERT INTO rfqs (requisition_id, subject, body, recipients, status)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO rfqs (requisition_id, rfq_draft, subject, body, recipients, status)
+      VALUES (?, ?, ?, ?, ?, ?)
     `);
-    return stmt.run(data.requisition_id, data.subject, data.body, data.recipients, data.status);
+    return stmt.run(data.requisition_id, data.rfq_draft, data.subject, data.body, data.recipients, data.status);
+  },
+  updateRFQ: (id: number, data: any) => {
+    const stmt = getDb().prepare(`
+      UPDATE rfqs
+      SET rfq_draft = ?, subject = ?, body = ?
+      WHERE id = ?
+    `);
+    return stmt.run(data.rfq_draft, data.subject, data.body, id);
   },
 
   // Quotations

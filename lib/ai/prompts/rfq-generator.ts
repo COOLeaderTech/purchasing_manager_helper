@@ -10,11 +10,13 @@ export type RFQResponse = z.infer<typeof RFQSchema>;
 export function createRFQPrompt(params: {
   vessel_name: string;
   vessel_imo?: string;
+  requisition_number?: string;
   port_name: string;
   delivery_date: string;
   currency: string;
   items: Array<{
     line_number: number;
+    item_number?: string;
     item_name: string;
     item_description?: string;
     quantity: number;
@@ -29,6 +31,7 @@ export function createRFQPrompt(params: {
   const {
     vessel_name,
     vessel_imo,
+    requisition_number,
     port_name,
     delivery_date,
     currency,
@@ -41,47 +44,74 @@ export function createRFQPrompt(params: {
 
   return `You are a professional maritime purchasing assistant. Generate a formal Request for Quotation (RFQ) email.
 
+IMPORTANT: Generate a DETERMINISTIC, STRUCTURED RFQ. No creative wording. Use the exact format below.
+
 ## VESSEL DETAILS
 - Vessel Name: ${vessel_name}
 ${vessel_imo ? `- IMO: ${vessel_imo}` : ''}
-- Port: ${port_name}
+${requisition_number ? `- Requisition No: ${requisition_number}` : ''}
+- Port of Delivery: ${port_name}
 - Delivery Date: ${delivery_date}
 - Currency: ${currency}
 
 ## ITEMS REQUIRED
-${items.map(item => `
-${item.line_number}. ${item.item_name}
-   Quantity: ${item.quantity} ${item.unit || ''}
-${item.item_description ? `   Description: ${item.item_description}` : ''}
-${item.specifications ? `   Specifications: ${item.specifications}` : ''}
+${items.map((item, idx) => `
+${idx + 1}. ${item.item_description || item.item_name}
+   ${item.item_number ? `Item No: ${item.item_number}` : ''}
+   Quantity: ${item.quantity} ${item.unit || 'unit(s)'}
+   ${item.specifications ? `Specifications: ${item.specifications}` : ''}
 `).join('\n')}
 
 ## COMPANY DETAILS
-- Company: ${company_name}
+- Buyer: ${company_name}
 - Email: ${company_email}
 - Phone: ${company_phone}
 
 ## INSTRUCTIONS
-Generate a professional, formal RFQ email in maritime business style.
+Generate RFQ using EXACTLY this structure:
 
-**Subject line:** Should be clear, specific, and include vessel name and port.
+**Subject:** Request for Quotation - ${vessel_name} - ${port_name}
 
-**Email body:** Should include:
-1. Professional greeting
-2. Reference to vessel and port
-3. Clear list of required items with quantities and specifications
-4. Requested delivery date and location
-5. Currency and payment terms (use industry standard)
-6. Request for delivery timeline
-7. Request for any relevant certifications or documentation
-8. Professional closing with contact information
+**Body Format:**
+===================================
+REQUEST FOR QUOTATION
+===================================
 
-${custom_terms ? `\n## ADDITIONAL TERMS\n${custom_terms}\n` : ''}
+BUYER: ${company_name}
+VESSEL: ${vessel_name}
+BUYER REFERENCE: ${requisition_number || 'N/A'}
+PORT OF DELIVERY: ${port_name}
+DELIVERY DATE: ${delivery_date}
+
+SUPPLIER: ___________________
+
+ITEMS REQUESTED:
+─────────────────────────────────
+No. | Description | Unit | Qty | Delivery Days | Notes
+─────────────────────────────────
+[List each item with: number, description, unit, quantity, blank delivery days, blank notes]
+
+TERMS:
+Payment: ___________________
+Delivery: ___________________
+Currency: ${currency}
+
+SUPPLIER NOTES:
+─────────────────────────────────
+[Space for supplier to add notes]
+
+${custom_terms ? `\nADDITIONAL TERMS:\n${custom_terms}\n` : ''}
+
+Please submit your quotation at your earliest convenience.
+
+Contact: ${company_name}
+Email: ${company_email}
+Phone: ${company_phone}
 
 Return response as valid JSON with exactly these keys:
 {
   "subject": "Email subject line",
-  "body": "Full email body with professional formatting"
+  "body": "Full email body with the exact structure above"
 }
 
 Generate the RFQ now:`;

@@ -7,7 +7,7 @@ import { z } from 'zod';
 
 const GenerateRFQSchema = z.object({
   requisition_id: z.string(),
-  vendors: z.array(z.number()).optional(),
+  vendor_ids: z.array(z.number()).optional(),
   custom_terms: z.string().optional(),
 });
 
@@ -23,7 +23,7 @@ const SendRFQSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { requisition_id, custom_terms } = GenerateRFQSchema.parse(body);
+    const { requisition_id, vendor_ids, custom_terms } = GenerateRFQSchema.parse(body);
 
     // Fetch requisition with items
     const requisition = dbHelpers.getRequisition(parseInt(requisition_id));
@@ -42,10 +42,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Fetch vendor emails if vendor_ids provided
+    let vendorEmails: string[] = [];
+    if (vendor_ids && vendor_ids.length > 0) {
+      vendorEmails = vendor_ids
+        .map(id => dbHelpers.getVendor(id))
+        .filter(v => v !== undefined)
+        .map(v => v!.email);
+    }
+
     // Create AI prompt
     const prompt = createRFQPrompt({
       vessel_name: requisition.vessel_name,
       vessel_imo: requisition.vessel_imo,
+      requisition_number: requisition.requisition_number,
       port_name: requisition.port_name,
       delivery_date: requisition.delivery_date,
       currency: requisition.currency,
@@ -66,12 +76,16 @@ export async function POST(request: NextRequest) {
     // Validate RFQ
     const validated = validateRFQ(rfq);
 
+    // Create rfq_draft (full structured text)
+    const rfq_draft = `${validated.subject}\n\n${validated.body}`;
+
     // Save RFQ to database
     const result = dbHelpers.createRFQ({
       requisition_id: parseInt(requisition_id),
+      rfq_draft,
       subject: validated.subject,
       body: validated.body,
-      recipients: JSON.stringify([]),
+      recipients: JSON.stringify(vendorEmails),
       status: 'draft',
     });
 
@@ -79,8 +93,10 @@ export async function POST(request: NextRequest) {
       success: true,
       rfq: {
         id: Number(result.lastInsertRowid),
-        ...validated,
+        subject: validated.subject,
+        body: validated.body,
         status: 'draft',
+        vendor_emails: vendorEmails,
       },
     }, { status: 201 });
   } catch (error) {

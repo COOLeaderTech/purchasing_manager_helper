@@ -3,6 +3,10 @@ CREATE TABLE IF NOT EXISTS requisitions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   vessel_name TEXT NOT NULL,
   vessel_imo TEXT,
+  requisition_number TEXT,
+  requisition_title TEXT,
+  requisition_date TEXT,
+  requisition_group TEXT,
   port_name TEXT NOT NULL,
   delivery_date TEXT NOT NULL,
   currency TEXT DEFAULT 'USD',
@@ -17,11 +21,14 @@ CREATE TABLE IF NOT EXISTS requisition_items (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   requisition_id INTEGER NOT NULL,
   line_number INTEGER,
+  item_number TEXT,
   item_name TEXT NOT NULL,
   item_description TEXT,
   quantity REAL NOT NULL,
   unit TEXT,
+  department TEXT,
   specifications TEXT,
+  item_notes TEXT,
   FOREIGN KEY (requisition_id) REFERENCES requisitions(id) ON DELETE CASCADE
 );
 
@@ -29,12 +36,14 @@ CREATE TABLE IF NOT EXISTS requisition_items (
 CREATE TABLE IF NOT EXISTS rfqs (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   requisition_id INTEGER NOT NULL,
+  rfq_draft TEXT NOT NULL,
   subject TEXT NOT NULL,
   body TEXT NOT NULL,
   recipients TEXT NOT NULL,
   sent_at TIMESTAMP,
   status TEXT DEFAULT 'draft',
   message_id TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (requisition_id) REFERENCES requisitions(id) ON DELETE CASCADE
 );
 
