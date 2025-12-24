@@ -11,11 +11,14 @@ let db: Database.Database | null = null;
 export function initDatabase() {
   if (db) return db;
 
-  const dbPath = process.env.DATABASE_PATH || './data/maritime-assistant.db';
+  // Use /tmp for serverless environments (Vercel)
+  const isVercel = process.env.VERCEL === '1';
+  const defaultPath = isVercel ? '/tmp/maritime-assistant.db' : './data/maritime-assistant.db';
+  const dbPath = process.env.DATABASE_PATH || defaultPath;
   const dbDir = path.dirname(dbPath);
 
-  // Create data directory if needed
-  if (!fs.existsSync(dbDir)) {
+  // Create data directory if needed (skip for /tmp as it always exists)
+  if (dbDir !== '/tmp' && !fs.existsSync(dbDir)) {
     fs.mkdirSync(dbDir, { recursive: true });
   }
 
